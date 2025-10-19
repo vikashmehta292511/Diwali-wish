@@ -1,4 +1,4 @@
-# 🪔 Diwali Wishes - Interactive 3D Greeting Card
+# 🪔 Diwali Wish - Interactive 3D Greeting Web Card
 
 A stunning, interactive web application to send personalized Diwali wishes with an engaging trivia challenge! Built with React, Three.js, and Framer Motion for a magical festival experience.
 
@@ -184,10 +184,6 @@ Found a bug or have a suggestion?
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 Author
-
-**Crafted with love by Vikash** ✨
-
 ## 🙏 Acknowledgments
 
 - [Three.js](https://threejs.org/) - 3D graphics library
@@ -197,6 +193,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Vite](https://vitejs.dev/) - Build tool
 - [Vercel](https://vercel.com/) - Deployment platform
 
-## ⭐ Show Your Support
+##  Show Your Support
 
 If you like this project, please give it a ⭐️.
+
