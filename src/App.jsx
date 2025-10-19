@@ -1,15 +1,131 @@
 import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars, Html } from '@react-three/drei';
+import { OrbitControls, Stars } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaShare, FaLink, FaMusic, FaRocket } from 'react-icons/fa';
+import { FaShare, FaLink, FaMusic, FaRocket, FaGamepad } from 'react-icons/fa';
 
-// Get recipient name from URL
+// Trivia Questions
+const TRIVIA_QUESTIONS = [
+  {
+    id: 1,
+    question: "What's my favorite Diwali sweet?",
+    options: ["Gulab Jamun", "Jalebi", "Kaju Katli", "Rasgulla"]
+  },
+  {
+    id: 2,
+    question: "Which Diwali ritual do I love the most?",
+    options: ["Lighting Diyas", "Rangoli Making", "Lakshmi Puja", "Cleaning House"]
+  },
+  {
+    id: 3,
+    question: "Which Diwali ritual do I never skip?",
+    options: ["Visiting relatives", "Sharing sweets", "Watching fireworks", "Dancing & Singing"]
+  },
+  {
+    id: 4,
+    question: "What's my go-to Diwali decoration style?",
+    options: ["Minimalist", "Traditional", "Modern", "Eco-friendly"]
+  },
+  {
+    id: 5,
+    question: "What's my favorite Diwali memory from childhood?",
+    options: ["Family gathering & reunion", "Decoration & Diya lighting", "Bursting crackers with cousins", "Making rangolis with mom"]
+  },
+  {
+    id: 6,
+    question: "My favorite Diwali decoration is...?",
+    options: ["Paper lanterns", "Flower garlands", "LED lights", "Traditional diyas"]
+  },
+  {
+    id: 7,
+    question: "I prefer celebrating Diwali...",
+    options: ["At home with family", "With friends outdoors", "At a big party", "Quietly alone"]
+  },
+  {
+    id: 8,
+    question: "If I could travel anywhere for Diwali, where would I go?",
+    options: ["Jaipur", "Varanasi", "Ayodhya", "Janakpur-Nepal"] 
+  },
+  {
+    id: 9,
+    question: "When do I start Diwali shopping?",
+    options: ["One month before", "Two weeks before", "One week before", "Last minute!"]
+  },
+  {
+    id: 10,
+    question: "My favorite part of Diwali is?",
+    options: ["Food", "Lights", "Family time", "Gifts"]
+  },
+  {
+    id: 11,
+    question: "How do I like my fireworks?",
+    options: ["Loud crackers", "Colorful sparklers", "Sky rockets", "No fireworks"]
+  },
+  {
+    id: 12,
+    question: "My Diwali morning starts with?",
+    options: ["Early bath", "Puja first", "Sweets first", "Sleep in!"]
+  },
+  {
+    id: 13,
+    question: "What's my Diwali shopping weakness?",
+    options: ["Clothes", "Sweets", "Home decor", "Gadgets"]
+  },
+  {
+    id: 14,
+    question: "I gift/donate people mostly...",
+    options: ["Sweets", "Clothes", "Decorative items", "Money/Gift cards"]
+  },
+  {
+    id: 15,
+    question: "What's one thing I always forget during Diwali prep?",
+    options: ["Buying crackers", "Charging camera", "Ironing clothes", "Inviting guests"]
+  },
+  {
+    id: 16,
+    question: "What's the most “me” thing I've ever done during Diwali?",
+    options: ["Fell asleep during puja", "Bursted-up cracker in Hands", "Ruin-up mom rangoli", "Forgot to light diyas"]
+  },
+  {
+    id: 17,
+    question: "If I had a Diwali superpower, what would it be?",
+    options: ["Instant rangoli creation", "Firework teleportation", "Sweets duplication", "Glitter invisibility"]
+  },
+  {
+    id: 18,
+    question: "What's my secret Diwali guilty pleasure?",
+    options: ["Hoarding Soan Papdi boxes", "Rewatching old Bollywood songs", "Sneaking extra puja prasad", "Pretending to help in cleaning"]
+  },
+  {
+    id: 19,
+    question: "What's my Diwali alter ego name?",
+    options: ["The Rangoli Rebel", "Captain Crackers", "Sweet Tooth Singh", "Diva of Diyas"]
+  },
+  {
+    id: 20,
+    question: "After Diwali, I'm most excited about?",
+    options: ["Leftover sweets", "New year plans", "Rest & recovery", "Bhai Dooj"]
+  }
+];
+
+// Get URL parameters
 const params = new URLSearchParams(window.location.search);
 const recipientName = params.get("to") || "Friend";
 const customMessage = params.get("msg") || "";
+const quizData = params.get("quiz") || "";
 
-// Removed Diya and Rocket components
+// Decode quiz answers from URL
+const decodeQuizData = (encoded) => {
+  if (!encoded) return null;
+  try {
+    const decoded = atob(encoded);
+    return JSON.parse(decoded);
+  } catch (e) {
+    return null;
+  }
+};
+
+const senderAnswers = decodeQuizData(quizData);
 
 // 3D Scene Component
 const Scene = () => {
@@ -140,27 +256,344 @@ const RandomPopup = ({ message, onDismiss }) => {
   );
 };
 
+// Trivia Quiz Component for Sender
+const TriviaCreator = ({ onComplete }) => {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState({});
+  
+  const handleAnswer = (answer) => {
+    const newAnswers = { ...answers, [TRIVIA_QUESTIONS[currentQuestion].id]: answer };
+    setAnswers(newAnswers);
+    
+    if (currentQuestion < TRIVIA_QUESTIONS.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+    } else {
+      onComplete(newAnswers);
+    }
+  };
+  
+  const progress = ((currentQuestion + 1) / TRIVIA_QUESTIONS.length) * 100;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        background: 'rgba(26, 0, 51, 0.6)',
+        backdropFilter: 'blur(20px)',
+        border: '2px solid rgba(255, 215, 0, 0.3)',
+        borderRadius: '25px',
+        padding: '40px',
+        maxWidth: '600px',
+        width: '90%',
+        boxShadow: '0 8px 32px rgba(255, 215, 0, 0.2)',
+      }}
+    >
+      <div style={{
+        width: '100%',
+        height: '6px',
+        background: 'rgba(255, 215, 0, 0.2)',
+        borderRadius: '10px',
+        marginBottom: '30px',
+        overflow: 'hidden',
+      }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.3 }}
+          style={{
+            height: '100%',
+            background: 'linear-gradient(90deg, #FFD700, #FF8C00)',
+            borderRadius: '10px',
+          }}
+        />
+      </div>
+      
+      <h3 style={{
+        fontFamily: "'Great Vibes', cursive",
+        fontSize: '2rem',
+        color: '#FFD700',
+        textAlign: 'center',
+        marginBottom: '10px',
+      }}>
+        Question {currentQuestion + 1} of {TRIVIA_QUESTIONS.length}
+      </h3>
+      
+      <p style={{
+        fontFamily: "'Dancing Script', cursive",
+        fontSize: '1.5rem',
+        color: '#FFD700',
+        textAlign: 'center',
+        marginBottom: '30px',
+      }}>
+        {TRIVIA_QUESTIONS[currentQuestion].question}
+      </p>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        {TRIVIA_QUESTIONS[currentQuestion].options.map((option, idx) => (
+          <motion.button
+            key={idx}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleAnswer(option)}
+            className="glass-button"
+            style={{
+              width: '100%',
+              textAlign: 'left',
+              padding: '15px 20px',
+              fontSize: '1.1rem',
+            }}
+          >
+            {String.fromCharCode(65 + idx)}. {option}
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
+// Trivia Quiz Component for Recipient
+const TriviaPlayer = ({ senderAnswers, onComplete }) => {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [recipientAnswers, setRecipientAnswers] = useState({});
+  
+  const handleAnswer = (answer) => {
+    const newAnswers = { ...recipientAnswers, [TRIVIA_QUESTIONS[currentQuestion].id]: answer };
+    setRecipientAnswers(newAnswers);
+    
+    if (currentQuestion < TRIVIA_QUESTIONS.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+    } else {
+      onComplete(newAnswers);
+    }
+  };
+  
+  const progress = ((currentQuestion + 1) / TRIVIA_QUESTIONS.length) * 100;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        background: 'rgba(26, 0, 51, 0.6)',
+        backdropFilter: 'blur(20px)',
+        border: '2px solid rgba(255, 215, 0, 0.3)',
+        borderRadius: '25px',
+        padding: '40px',
+        maxWidth: '600px',
+        width: '90%',
+        boxShadow: '0 8px 32px rgba(255, 215, 0, 0.2)',
+      }}
+    >
+      <div style={{
+        width: '100%',
+        height: '6px',
+        background: 'rgba(255, 215, 0, 0.2)',
+        borderRadius: '10px',
+        marginBottom: '30px',
+        overflow: 'hidden',
+      }}>
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.3 }}
+          style={{
+            height: '100%',
+            background: 'linear-gradient(90deg, #FFD700, #FF8C00)',
+            borderRadius: '10px',
+          }}
+        />
+      </div>
+      
+      <h3 style={{
+        fontFamily: "'Great Vibes', cursive",
+        fontSize: '2rem',
+        color: '#FFD700',
+        textAlign: 'center',
+        marginBottom: '10px',
+      }}>
+        Question {currentQuestion + 1} of {TRIVIA_QUESTIONS.length}
+      </h3>
+      
+      <p style={{
+        fontFamily: "'Dancing Script', cursive",
+        fontSize: '1.5rem',
+        color: '#FFD700',
+        textAlign: 'center',
+        marginBottom: '30px',
+      }}>
+        {TRIVIA_QUESTIONS[currentQuestion].question}
+      </p>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        {TRIVIA_QUESTIONS[currentQuestion].options.map((option, idx) => (
+          <motion.button
+            key={idx}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleAnswer(option)}
+            className="glass-button"
+            style={{
+              width: '100%',
+              textAlign: 'left',
+              padding: '15px 20px',
+              fontSize: '1.1rem',
+            }}
+          >
+            {String.fromCharCode(65 + idx)}. {option}
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
+// Results Component
+const TriviaResults = ({ senderAnswers, recipientAnswers, onClose }) => {
+  let correctCount = 0;
+  TRIVIA_QUESTIONS.forEach(q => {
+    if (senderAnswers[q.id] === recipientAnswers[q.id]) {
+      correctCount++;
+    }
+  });
+  
+  const percentage = (correctCount / TRIVIA_QUESTIONS.length) * 100;
+  
+  const getMessage = () => {
+    if (percentage === 100) return "🎉 You're officially Diwali soulmates! You know each other like the back of a mehndi hand — pure festive telepathy!🪔";
+    if (percentage >= 80) return "✨ Amazing! You know them so well! Just a couple of firecrackers lighting up the same sky — Diwali magic at its finest!";
+    if (percentage >= 60) return "🎊 Pretty good! You're on the right track! You've got the spark — just a few more gulab jamuns and game nights to reach full glow!";
+    if (percentage >= 40) return "😊 Not bad! Time for more Diwali hangouts! You're halfway to becoming Diwali besties — maybe swap a few laddoos and stories next time?";
+    return "😅 Looks like you need a few more laddoo bonding sessions! The diya's flickering, but the friendship flame needs a little more oil — time to reconnect!";
+  };
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      style={{
+        background: 'rgba(26, 0, 51, 0.9)',
+        backdropFilter: 'blur(20px)',
+        border: '3px solid rgba(255, 215, 0, 0.5)',
+        borderRadius: '25px',
+        padding: '40px',
+        maxWidth: '700px',
+        width: '90%',
+        maxHeight: '80vh',
+        overflow: 'auto',
+        boxShadow: '0 8px 32px rgba(255, 215, 0, 0.3)',
+      }}
+    >
+      <h2 style={{
+        fontFamily: "'Great Vibes', cursive",
+        fontSize: '3rem',
+        color: '#FFD700',
+        textAlign: 'center',
+        marginBottom: '20px',
+        textShadow: '0 0 20px rgba(255, 215, 0, 0.6)',
+      }}>
+        Your Score: {correctCount}/{TRIVIA_QUESTIONS.length}
+      </h2>
+      
+      <p style={{
+        fontFamily: "'Dancing Script', cursive",
+        fontSize: '1.8rem',
+        color: '#FF8C00',
+        textAlign: 'center',
+        marginBottom: '30px',
+      }}>
+        {getMessage()}
+      </p>
+      
+      <div style={{
+        background: 'rgba(255, 215, 0, 0.05)',
+        borderRadius: '15px',
+        padding: '20px',
+        marginBottom: '20px',
+      }}>
+        {TRIVIA_QUESTIONS.map((q, idx) => {
+          const isCorrect = senderAnswers[q.id] === recipientAnswers[q.id];
+          return (
+            <div
+              key={q.id}
+              style={{
+                padding: '15px',
+                marginBottom: '15px',
+                background: isCorrect 
+                  ? 'rgba(0, 255, 0, 0.1)' 
+                  : 'rgba(255, 0, 0, 0.1)',
+                borderLeft: `4px solid ${isCorrect ? '#00FF00' : '#FF0000'}`,
+                borderRadius: '10px',
+              }}
+            >
+              <p style={{
+                fontFamily: "'Dancing Script', cursive",
+                fontSize: '1.1rem',
+                color: '#FFD700',
+                marginBottom: '8px',
+              }}>
+                {idx + 1}. {q.question}
+              </p>
+              <p style={{
+                fontFamily: "'Dancing Script', cursive",
+                fontSize: '1rem',
+                color: isCorrect ? '#00FF88' : '#FF6B6B',
+                marginBottom: '5px',
+              }}>
+                Your answer: {recipientAnswers[q.id]}
+              </p>
+              {!isCorrect && (
+                <p style={{
+                  fontFamily: "'Dancing Script', cursive",
+                  fontSize: '1rem',
+                  color: '#FFD700',
+                }}>
+                  Correct answer: {senderAnswers[q.id]}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      <button
+        onClick={onClose}
+        className="glass-button"
+        style={{ width: '100%', marginTop: '20px' }}
+      >
+        Close & Continue to Wishes ✨
+      </button>
+    </motion.div>
+  );
+};
+
 // Main App Component
 export default function App() {
-  const [activeTab, setActiveTab] = useState('main');
+  const [activeTab, setActiveTab] = useState(senderAnswers ? 'trivia' : 'main');
   const [sparkles, setSparkles] = useState([]);
   const [popupMessage, setPopupMessage] = useState(null);
-  const [musicEnabled, setMusicEnabled] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customMsg, setCustomMsg] = useState('');
   const [showFullMessage, setShowFullMessage] = useState(false);
   
+  // Trivia states
+  const [showTriviaCreator, setShowTriviaCreator] = useState(false);
+  const [triviaAnswers, setTriviaAnswers] = useState(null);
+  const [showTriviaPlayer, setShowTriviaPlayer] = useState(false);
+  const [recipientTriviaAnswers, setRecipientTriviaAnswers] = useState(null);
+  const [showResults, setShowResults] = useState(false);
+  
   const funnyMessages = [
-    "✨ You just unlocked 100% happiness!",
-    "🪔 Don't blow the Diya! 😂",
-    "⚡ Your brightness level increased by 10x!",
-    "🎆 May your sweets be plenty!",
-    "✨ Prosperity loading... 99% complete!",
-    "🪔 Your good vibes are contagious!",
-    "🎊 Warning: Joy levels exceeding normal!",
+    "🎉 Happiness: 100% unlocked!",
+    "🪔 Diya alert: don't blow it!",
+    "⚡ Brightness boosted x10!",
+    "🍬 Sweets incoming!",
+    "✨ Prosperity: 99% loading...",
+    "😄 Vibes = contagious!",
+    "🎊 Joy overload detected!",
     "✨ You're glowing brighter than diyas!",
     "🎇 Sparkle mode: ACTIVATED!",
-    "🪔 May your year be lit... literally!",
+    "🔥 Year = officially lit!",
   ];
   
   // Show message when URL has custom message
@@ -169,6 +602,13 @@ export default function App() {
       setTimeout(() => {
         setShowFullMessage(true);
       }, 1000);
+    }
+  }, []);
+  
+  // Show trivia if quiz data exists in URL
+  useEffect(() => {
+    if (senderAnswers) {
+      setShowTriviaPlayer(true);
     }
   }, []);
   
@@ -194,9 +634,12 @@ export default function App() {
       alert('Please enter a name!');
       return;
     }
+    
     const baseUrl = window.location.origin + window.location.pathname;
     const msgParam = customMsg.trim() ? `&msg=${encodeURIComponent(customMsg)}` : '';
-    const link = `${baseUrl}?to=${encodeURIComponent(customName)}${msgParam}`;
+    const quizParam = triviaAnswers ? `&quiz=${btoa(JSON.stringify(triviaAnswers))}` : '';
+    const link = `${baseUrl}?to=${encodeURIComponent(customName)}${msgParam}${quizParam}`;
+    
     navigator.clipboard.writeText(link);
     alert(`Link copied! Share it with ${customName}! 🎉`);
   };
@@ -213,6 +656,18 @@ export default function App() {
       navigator.clipboard.writeText(link);
       alert('Link copied to clipboard! 📋');
     }
+  };
+  
+  const handleTriviaComplete = (answers) => {
+    setTriviaAnswers(answers);
+    setShowTriviaCreator(false);
+    alert('Trivia created! Now create your link to share! 🎮');
+  };
+  
+  const handleRecipientTriviaComplete = (answers) => {
+    setRecipientTriviaAnswers(answers);
+    setShowTriviaPlayer(false);
+    setShowResults(true);
   };
 
   return (
@@ -311,6 +766,91 @@ export default function App() {
         )}
       </AnimatePresence>
       
+      {/* Trivia Creator Modal */}
+      <AnimatePresence>
+        {showTriviaCreator && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.8)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 3000,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '20px',
+              overflow: 'auto',
+            }}
+          >
+            <TriviaCreator onComplete={handleTriviaComplete} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Trivia Player Modal */}
+      <AnimatePresence>
+        {showTriviaPlayer && senderAnswers && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.8)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 3000,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '20px',
+              overflow: 'auto',
+            }}
+          >
+            <TriviaPlayer 
+              senderAnswers={senderAnswers} 
+              onComplete={handleRecipientTriviaComplete}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Results Modal */}
+      <AnimatePresence>
+        {showResults && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.8)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 3000,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '20px',
+              overflow: 'auto',
+            }}
+          >
+            <TriviaResults 
+              senderAnswers={senderAnswers}
+              recipientAnswers={recipientTriviaAnswers}
+              onClose={() => {
+                setShowResults(false);
+                setActiveTab('main');
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* Full Message Display */}
       <AnimatePresence>
         {showFullMessage && customMessage && (
@@ -351,7 +891,7 @@ export default function App() {
                 className="glass-button"
                 style={{ marginTop: '20px' }}
               >
-                Continue to Wishes ✨
+                Continue ✨
               </button>
             </div>
           </motion.div>
@@ -422,7 +962,7 @@ export default function App() {
           {[
             { id: 'main', label: '🪔 Main', icon: '🪔' },
             { id: 'blessings', label: '🙏 Blessings', icon: '🙏' },
-            { id: 'customize', label: '⚙️ Create & Share', icon: '⚙️' },
+            { id: 'customize', label: '⚙️ Create', icon: '⚙️' },
           ].map(tab => (
             <motion.button
               key={tab.id}
@@ -449,8 +989,10 @@ export default function App() {
           flex: 1,
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           overflow: 'auto',
+          paddingTop: '20px',
+          paddingBottom: '40px'
         }}>
           <AnimatePresence mode="wait">
             {activeTab === 'main' && (
@@ -478,7 +1020,7 @@ export default function App() {
                   lineHeight: '1.6',
                   margin: '20px 0',
                 }}>
-                  May your life be filled with light, love, and endless joy this Diwali!
+                  May your life be fulfilled with colourful light, love, and endless joy this Diwali!
                 </p>
                 <p style={{
                   fontFamily: "'Dancing Script', cursive",
@@ -486,7 +1028,7 @@ export default function App() {
                   color: '#FF8C00',
                   marginTop: '20px',
                 }}>
-                  May this festival of lights illuminate your path to success and happiness! ✨
+                  I hope this radiant Festival of Lights illuminate your path with boundless success, heartfelt joy, and lasting happiness. Like diya's glow and fireworks sparkle, may your dreams also shine brighter than ever, and your heart be filled with warmth, love, and togetherness.✨
                 </p>
                 <div style={{ marginTop: '30px', display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button onClick={shareLink} className="glass-button">
@@ -527,7 +1069,7 @@ export default function App() {
                   "May your home be filled with laughter and prosperity! 🏠✨",
                   "May success light up every corner of your life! 🌟",
                   "Wishing you health, wealth, and boundless happiness! 💰❤️",
-                  "May every Diya you light bring new hope! 🪔🌈",
+                  "May every Diya you light bring new hope! 🪔",
                   "May this Diwali sparkle with moments of joy! 🎆😊",
                 ].map((blessing, idx) => (
                   <motion.div
@@ -618,6 +1160,46 @@ export default function App() {
                   />
                 </div>
                 
+                <div style={{
+                  background: 'rgba(255, 215, 0, 0.08)',
+                  borderRadius: '15px',
+                  padding: '20px',
+                  marginBottom: '20px',
+                  border: '1px dashed rgba(255, 215, 0, 0.3)',
+                }}>
+                  <h3 style={{
+                    fontFamily: "'Great Vibes', cursive",
+                    fontSize: '1.8rem',
+                    color: '#FFD700',
+                    marginBottom: '15px',
+                    textAlign: 'center',
+                  }}>
+                    🎮 Add Trivia Challenge
+                  </h3>
+                  <p style={{
+                    fontFamily: "'Dancing Script', cursive",
+                    fontSize: '1rem',
+                    color: '#FFD700',
+                    marginBottom: '15px',
+                    textAlign: 'center',
+                  }}>
+                    Make it fun! Add a "How Well Do You Know Me?" quiz
+                  </p>
+                  <button 
+                    onClick={() => setShowTriviaCreator(true)}
+                    className="glass-button"
+                    style={{ 
+                      width: '100%',
+                      background: triviaAnswers 
+                        ? 'rgba(0, 255, 0, 0.2)' 
+                        : 'rgba(255, 215, 0, 0.1)',
+                    }}
+                  >
+                    <FaGamepad style={{ marginRight: '8px' }} />
+                    {triviaAnswers ? '✓ Trivia Added!' : 'Create Trivia (Optional)'}
+                  </button>
+                </div>
+                
                 <button onClick={createPersonalLink} className="glass-button" style={{ width: '100%', marginBottom: '15px' }}>
                   <FaLink style={{ marginRight: '8px' }} />
                   Create & Copy Link
@@ -640,7 +1222,7 @@ export default function App() {
                     color: 'rgba(255, 215, 0, 0.6)',
                     fontStyle: 'italic',
                   }}>
-                    Crafted with love by Vikas ✨
+                    Crafted with love by BeCash✨
                   </p>
                 </div>
               </motion.div>
