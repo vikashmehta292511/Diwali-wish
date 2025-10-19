@@ -36,7 +36,7 @@ A stunning, interactive web application to send personalized Diwali wishes with 
 
 ## 🚀 Live Demo
 
-**👉 [Try it now!](https://diwali-wish-2025.vercel.app)** 🎆
+** [Try it now!](https://diwali-wish-2025.vercel.app)** 🎆
 
 ## 🛠️ Built With
 
@@ -184,7 +184,7 @@ Found a bug or have a suggestion?
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [Three.js](https://threejs.org/) - 3D graphics library
 - [React Three Fiber](https://docs.pmnd.rs/react-three-fiber) - React renderer for Three.js
@@ -196,4 +196,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ##  Show Your Support
 
 If you like this project, please give it a ⭐️.
+
 
